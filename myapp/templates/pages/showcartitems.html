@@ -1,0 +1,278 @@
+
+
+
+
+
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %} My Cart Items {% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+
+    <h2 class="mb-4">My Cart</h2>
+
+    {% if cartitemsdata %}
+
+    <div class="table-responsive">
+    <table class="table table-bordered align-middle" id="cartTable">
+        <thead class="table-dark">
+            <tr>
+                <th>Image</th>
+                <th>Product</th>
+                <th>Description</th>
+                <th>Price</th>
+                <th>Qty</th>
+                <th>Subtotal</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for item in cartitemsdata %}
+            <tr>
+
+                <td width="120">
+                    {% if item.product.product_image %}
+                        <img src="{{ item.product.product_image.url }}"
+                             class="img-fluid rounded"
+                             style="height:80px;">
+                    {% else %}
+                        No Image
+                    {% endif %}
+                </td>
+
+                <td>{{ item.product.product_name }}</td>
+
+                <td>{{ item.product.descriotion|truncatechars:100 }}</td>
+
+                <td class="price">
+                    {{ item.product.price }}
+                </td>
+
+                <td class="qty">
+                    {{ item.quantity }}
+                </td>
+
+                <td class="subtotal">
+                    {{ item.item_total_price }}
+                </td>
+               
+
+                            
+                            <td>
+                <button
+                    type="button"
+                    class="btn btn-warning buy-now-btn"
+                    data-bs-toggle="modal"
+                    data-bs-target="#buyNowModal"
+                    data-cart-id="{{ item.id }}"
+                    data-productid ="{{ item.product.id }}"
+                    data-product="{{ item.product.product_name }}"
+                    data-price="{{ item.product.price }}"
+                    data-qty="{{ item.quantity }}"
+                    data-total="{{ item.item_total_price }}"
+                >
+                    Buy Now
+                </button>
+            </td>
+               
+
+            </tr>
+            {% endfor %}
+        </tbody>
+
+        <tfoot>
+            <tr>
+                <th colspan="5" class="text-end">
+                    Total Amount
+                </th>
+                <th id="grandTotal">
+                    {{ total_price }}
+                </th>
+            </tr>
+        </tfoot>
+    </table>
+
+
+     <div class="modal fade" id="buyNowModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <form method="POST" action="{% url 'placedOrderView' %}">
+                {% csrf_token %}
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Place Order</h5>
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal">
+                    </button>
+                </div>
+
+                <div class="modal-body">
+
+                    <input type="hidden"
+                           name="cart_item_id"
+                           id="cartItemId">
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Product Name
+                        </label>
+                        <input type="hidden" id="productid" class="hidden" name="productid" >
+                        <input type="text"
+                               id="productName"
+                               
+                               class="form-control"
+                               readonly>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Quantity
+                        </label>
+                        <input type="text"
+                               id="productQty"
+                               name = "qty"
+                               class="form-control"
+                               readonly>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Total Amount
+                        </label>
+                        <input type="text"
+                               id="productTotal"
+                               name="totalamount"
+                               class="form-control"
+                               readonly>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Payment Method
+                        </label>
+
+                        <select name="payment_method"
+                                class="form-select"
+                                required>
+                            <option value="">
+                                Select Payment Method
+                            </option>
+                            <option value="cod">
+                                Cash On Delivery
+                            </option>
+                            <option value="online">
+                                Online Payment
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Paid Amount
+                        </label>
+                        <input type="number"
+                               name="paid_amount"
+                               id="paidAmount"
+                               class="form-control"
+                               required>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit"
+                            class="btn btn-success">
+                        Submit Order
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+   
+</div>
+
+    {% else %}
+
+    <div class="alert alert-info">
+        Your cart is empty.
+    </div>
+
+    {% endif %}
+
+</div>
+
+
+{% comment %} <script>
+function calculateCart() {
+
+    let grandTotal = 0;
+
+    document.querySelectorAll("#cartTable tbody tr").forEach(function(row) {
+
+        let price = parseFloat(
+            row.querySelector(".price").innerText
+        ) || 0;
+
+        let qty = parseInt(
+            row.querySelector(".qty").innerText
+        ) || 0;
+
+        let subtotal = price * qty;
+
+        row.querySelector(".subtotal").innerText =
+            "₹" + subtotal.toFixed(2);
+
+        grandTotal += subtotal;
+    });
+
+    document.getElementById("grandTotal").innerText =
+        "₹" + grandTotal.toFixed(2);
+}
+
+document.addEventListener("DOMContentLoaded", calculateCart);
+</script> {% endcomment %}
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const buyButtons = document.querySelectorAll(".buy-now-btn");
+
+    buyButtons.forEach(button => {
+
+        button.addEventListener("click", function () {
+
+            document.getElementById("cartItemId").value =
+                this.dataset.cartId;
+            document.getElementById("productid").value =
+                this.dataset.productid;
+            
+            document.getElementById("productName").value =
+                this.dataset.product;
+
+            document.getElementById("productQty").value =
+                this.dataset.qty;
+
+            document.getElementById("productTotal").value =
+                this.dataset.total;
+
+            document.getElementById("paidAmount").value =
+                this.dataset.total;
+        });
+
+    });
+
+});
+</script>
+
+{% endblock %}
+
